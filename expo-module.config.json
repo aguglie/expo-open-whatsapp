@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android", "web"],
+  "ios": {
+    "modules": ["ExpoOpenWhatsappModule"]
+  },
+  "android": {
+    "modules": ["net.guglio.openwhatsapp.ExpoOpenWhatsappModule"]
+  }
+}
