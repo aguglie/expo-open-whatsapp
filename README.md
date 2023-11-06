@@ -50,3 +50,11 @@ function sendWhatsAppMessage(phone, text) {
 | `send`         | `phoneNumber: string`, `text: string`, `disambiguation?: { title, message }` | `Promise<"OK" \| "NO_WHATSAPP_INSTALLED">`                 | Opens WhatsApp/WhatsApp Business to send a message. Use `disambiguation` to customize the alert in case of multiple WhatsApp variants installed. |
 
 
+
+## Example App
+
+The library includes an example folder with a sample app to demonstrate the usage of `expo-open-whatsapp`.
+
+## License
+
+MIT License
