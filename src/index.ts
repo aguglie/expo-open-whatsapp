@@ -1,26 +1,48 @@
-import { NativeModulesProxy, EventEmitter, Subscription } from 'expo-modules-core';
+import { Alert } from "react-native";
 
-// Import the native module. On web, it will be resolved to ExpoOpenWhatsapp.web.ts
-// and on native platforms to ExpoOpenWhatsapp.ts
-import ExpoOpenWhatsappModule from './ExpoOpenWhatsappModule';
-import ExpoOpenWhatsappView from './ExpoOpenWhatsappView';
-import { ChangeEventPayload, ExpoOpenWhatsappViewProps } from './ExpoOpenWhatsapp.types';
+import * as ExpoOpenWhatsappModule from "./ExpoOpenWhatsappModule";
+import { InstalledVariants } from "./InstalledVariants";
 
-// Get the native constant value.
-export const PI = ExpoOpenWhatsappModule.PI;
-
-export function hello(): string {
-  return ExpoOpenWhatsappModule.hello();
+export function getInstalled(): Promise<InstalledVariants> {
+  return ExpoOpenWhatsappModule.getInstalled();
 }
 
-export async function setValueAsync(value: string) {
-  return await ExpoOpenWhatsappModule.setValueAsync(value);
+export async function send(
+  phoneNumber: string,
+  text: string,
+  disambiguation?: { title: string; message: string },
+): Promise<"OK" | "NO_WHATSAPP_INSTALLED"> {
+  const installedVariants = await getInstalled();
+
+  if (!installedVariants.whatsapp && !installedVariants.whatsappBusiness) {
+    return "NO_WHATSAPP_INSTALLED";
+  }
+
+  if (installedVariants.whatsapp && !installedVariants.whatsappBusiness) {
+    await ExpoOpenWhatsappModule.sendWhatsapp(phoneNumber, text);
+    return "OK";
+  }
+
+  if (installedVariants.whatsappBusiness && !installedVariants.whatsapp) {
+    await ExpoOpenWhatsappModule.sendWhatsappBusiness(phoneNumber, text);
+    return "OK";
+  }
+
+  Alert.alert(
+    disambiguation?.title || "Send via...",
+    disambiguation?.message || "Choose which WhatsApp to use",
+    [
+      {
+        text: "WhatsApp",
+        onPress: () => ExpoOpenWhatsappModule.sendWhatsapp(phoneNumber, text),
+      },
+      {
+        text: "WhatsApp Business",
+        onPress: () =>
+          ExpoOpenWhatsappModule.sendWhatsappBusiness(phoneNumber, text),
+      },
+    ],
+  );
+
+  return "OK";
 }
-
-const emitter = new EventEmitter(ExpoOpenWhatsappModule ?? NativeModulesProxy.ExpoOpenWhatsapp);
-
-export function addChangeListener(listener: (event: ChangeEventPayload) => void): Subscription {
-  return emitter.addListener<ChangeEventPayload>('onChange', listener);
-}
-
-export { ExpoOpenWhatsappView, ExpoOpenWhatsappViewProps, ChangeEventPayload };

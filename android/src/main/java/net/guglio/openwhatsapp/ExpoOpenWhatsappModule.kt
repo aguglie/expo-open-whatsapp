@@ -1,47 +1,59 @@
 package net.guglio.openwhatsapp
 
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import java.net.URLEncoder
+
 
 class ExpoOpenWhatsappModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
-  override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoOpenWhatsapp')` in JavaScript.
-    Name("ExpoOpenWhatsapp")
+    override fun definition() = ModuleDefinition {
+        Name("ExpoOpenWhatsapp")
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants(
-      "PI" to Math.PI
-    )
+        Function("getInstalled") {
+            val hasWhatsapp = isPackageInstalled("com.whatsapp")
+            val hasWhatsappBusiness = isPackageInstalled("com.whatsapp.w4b")
 
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+            return@Function mapOf<String, Boolean>(
+                    "whatsapp" to hasWhatsapp,
+                    "whatsappBusiness" to hasWhatsappBusiness
+            )
+        }
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
+        Function("sendWhatsapp") { target: String, message: String ->
+            openWhatsapp(target, message, "com.whatsapp")
+        }
+
+        Function("sendWhatsappBusiness") { target: String, message: String ->
+            openWhatsapp(target, message, "com.whatsapp.w4b")
+        }
     }
 
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
+    private fun isPackageInstalled(packageName: String): Boolean {
+        val packageManager = appContext.reactContext?.packageManager ?: return false
+
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getApplicationInfo(packageName, PackageManager.ApplicationInfoFlags.of(0))
+            } else {
+                packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
+            }
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
     }
 
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(ExpoOpenWhatsappView::class) {
-      // Defines a setter for the `name` prop.
-      Prop("name") { view: ExpoOpenWhatsappView, prop: String ->
-        println(prop)
-      }
+    private fun openWhatsapp(target: String, message: String, packageName: String): Unit {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.setPackage(packageName)
+        intent.data = Uri.parse("https://wa.me/$target?text=${URLEncoder.encode(message, "UTF-8")}")
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        val activity = appContext.activityProvider?.currentActivity
+        activity?.startActivity(intent)
     }
-  }
 }
