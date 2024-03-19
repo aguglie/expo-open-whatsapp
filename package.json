@@ -1,6 +1,6 @@
 {
   "name": "expo-open-whatsapp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Module to open Whatsapp and send messages",
   "main": "build/index.js",
   "types": "build/index.d.ts",
