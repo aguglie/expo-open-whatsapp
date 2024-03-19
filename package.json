@@ -21,7 +21,10 @@
     "expo-open-whatsapp",
     "ExpoOpenWhatsapp"
   ],
-  "repository": "https://github.com/aguglie/expo-open-whatsapp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aguglie/expo-open-whatsapp.git"
+  },
   "bugs": {
     "url": "https://github.com/aguglie/expo-open-whatsapp/issues"
   },
